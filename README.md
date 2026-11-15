@@ -4,14 +4,14 @@ Find out which Farming Simulator 25 mods are broken **before** you sit through a
 
 It's one file you open in your web browser. It reads your mods on your own PC: nothing is installed, nothing is uploaded, and your mods are never changed.
 
-**Download:** get `FS25-Mod-Checker-v1.0.0.zip` from the [latest release](https://github.com/kingjawz9/FS25-Mod-Checker/releases/latest).
+**Download:** the zip under "Assets" on the [latest release](https://github.com/kingjawz9/FS25-Mod-Checker/releases/latest) page.
 
 ## How to use it
 
 Prefer watching? **[`Tutorial.mp4`](Tutorial.mp4)** in this folder is a 90-second walkthrough (no sound, captions on screen). It uses made-up demo mods.
 
 1. Unzip this download anywhere (your Desktop is fine).
-2. Double-click **`FS25-Mod-Checker.html`**. It opens in Chrome, Edge or Firefox.
+2. Double-click **`FS25-Mod-Checker.html`**. It opens in your web browser. It's tested in Chrome and Edge; Firefox should work too.
 3. Click **Choose folder** and pick your **FarmingSimulator2025** folder. It's usually here:
 
    `Documents\My Games\FarmingSimulator2025`
@@ -86,7 +86,9 @@ The checker reads files, it doesn't run the game. A few problems only show up on
 
 **A mod shows "can't be opened" but works in the game.** Close the game and run the checker again. The game can lock files while it's running.
 
-**Does it work on Mac or Linux?** Yes, in any up-to-date Chrome, Edge or Firefox.
+**Does it work on Mac or Linux?** It should, in an up-to-date Chrome, Edge or Firefox, but so far it has only been tested on Windows. Pick the FarmingSimulator2025 folder wherever your system keeps it.
+
+**Found a problem, or a mod it gets wrong?** Open an issue on [GitHub](https://github.com/kingjawz9/FS25-Mod-Checker/issues) and paste the **Copy report as text** output. A link to where you got the mod helps; please don't attach other people's mods.
 
 ## For modders and tinkerers
 

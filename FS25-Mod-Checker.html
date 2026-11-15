@@ -148,7 +148,7 @@ footer{margin-top:34px;font-size:13px;color:var(--faint);text-align:center}
 
 <script>
 'use strict';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 // descVersion: FS25 mods start at 90. 116 is the newest seen in real mods (game patch 1.25, Nov 2026).
 // ponytail: bump KNOWN_MAX_DESC when a game patch raises it; above it we only warn.
 const FS25_MIN_DESC = 90, KNOWN_MAX_DESC = 116;
@@ -595,6 +595,16 @@ async function itemsFromHandle(dir) {
   }
   return items;
 }
+// Firefox/Safari drops only give the older FileSystemEntry API; wrap it so itemsFromHandle can walk it
+const entryHandle = e => e.isFile
+  ? { kind: 'file', getFile: () => new Promise((ok, bad) => e.file(ok, bad)) }
+  : { kind: 'directory',
+      async *entries() { const r = e.createReader(); for (let b; (b = await new Promise((ok, bad) => r.readEntries(ok, bad))).length;) for (const c of b) yield [c.name, entryHandle(c)]; },
+      getFileHandle: n => new Promise((ok, bad) => e.getFile(n, {}, f => ok(entryHandle(f)), bad)) };
+async function runDir(dir) {
+  show('busy'); $('#busyText').textContent = 'Reading folder…';
+  try { await run(await itemsFromHandle(dir)); } catch (err) { show('start'); alert(`Couldn't read that folder. Some browsers block reading a dragged folder, so click Choose folder instead.\n\n(${err.message})`); }
+}
 function classify(items) {
   const fsRoot = items.some(i => /^mods\//i.test(i.path)), mods = [], folders = new Map(), saves = [];
   let log = null;
@@ -844,8 +854,7 @@ document.addEventListener('toggle', e => {
 $('#pickBtn').addEventListener('click', async () => {
   if (window.showDirectoryPicker) {
     let dir; try { dir = await showDirectoryPicker({ id: 'fs25', mode: 'read' }); } catch (e) { if (e.name !== 'AbortError') $('#dirInput').click(); return; }
-    show('busy'); $('#busyText').textContent = 'Reading folder…';
-    try { await run(await itemsFromHandle(dir)); } catch (err) { show('start'); alert("Couldn't read that folder: " + err.message); }
+    await runDir(dir);
   } else $('#dirInput').click();
 });
 $('#dirInput').addEventListener('change', e => run([...e.target.files].map(f => ({ path: f.webkitRelativePath.split('/').slice(1).join('/'), file: f }))));
@@ -855,11 +864,13 @@ drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add(
 drop.addEventListener('dragleave', () => drop.classList.remove('over'));
 drop.addEventListener('drop', async e => {
   e.preventDefault(); drop.classList.remove('over');
-  const its = [...e.dataTransfer.items];
+  // take everything before the first await: the browser empties dataTransfer as soon as this handler yields
+  const its = [...e.dataTransfer.items], files = [...e.dataTransfer.files], entries = its.map(i => i.webkitGetAsEntry?.());
   const handles = its[0]?.getAsFileSystemHandle ? await Promise.all(its.map(i => i.getAsFileSystemHandle())) : [];
-  const dir = handles.find(h => h?.kind === 'directory');
-  if (dir) return run(await itemsFromHandle(dir));
-  run([...e.dataTransfer.files].map(f => ({ path: f.name, file: f })));
+  const dirEntry = entries.find(x => x?.isDirectory);
+  const dir = handles.find(h => h?.kind === 'directory') || (dirEntry && entryHandle(dirEntry));
+  if (dir) return runDir(dir);
+  run(files.map(f => ({ path: f.name, file: f })));
 });
 $('#againBtn').addEventListener('click', () => show('start'));
 $('#copyBtn').addEventListener('click', async () => { try { await navigator.clipboard.writeText(reportText()); $('#copyNote').textContent = 'Copied. Paste it into a forum post or Discord.'; } catch { $('#copyNote').textContent = "Your browser blocked the clipboard."; } });
